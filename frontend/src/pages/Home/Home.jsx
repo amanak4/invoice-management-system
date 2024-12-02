@@ -1,12 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 import { AppBar, Toolbar, Typography, Button, Box, IconButton, Card, CardContent } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import { useNavigate } from "react-router-dom";
-
-const InvoicesPage = ({ invoices, onRefresh ,handleDelete}) => {
+import PaginationComponent from "./Pagination";
+import { base_url } from "../../base_url";
+const InvoicesPage = ({ invoices, onRefresh ,handleDelete,setInvoices}) => {
   const siteName = "InvoicePro";
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1); 
+
 const navigateTo = useNavigate();
   return (
     <div>
@@ -45,6 +49,7 @@ const navigateTo = useNavigate();
           ))}
         </div>
       </div>
+       <PaginationComponent baseUrl={base_url} setInvoices={setInvoices} page={page} setPage={setPage} totalPages={totalPages} setTotalPages={setTotalPages} />
     </div>
   );
 };

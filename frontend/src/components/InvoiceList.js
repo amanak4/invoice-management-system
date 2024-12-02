@@ -7,7 +7,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import InvoicesPage from '../pages/Home/Home';
 
 const InvoiceList = () => {
-    const { invoices, fetchInvoices, deleteInvoice, loading } = useInvoiceContext();
+    const { invoices, fetchInvoices, deleteInvoice, loading, setInvoices } = useInvoiceContext();
 
     useEffect(() => {
         fetchInvoices();
@@ -37,7 +37,7 @@ const InvoiceList = () => {
     }
 
     return (
-        <InvoicesPage invoices={invoices} onRefresh={refreshfxn}  handleDelete={handleDelete}/>
+        <InvoicesPage invoices={invoices} onRefresh={refreshfxn}  handleDelete={handleDelete} setInvoices={setInvoices}/>
         // <div className="p-4">
         //     <div className="flex justify-between items-center mb-4">
         //    <div className="flex items-center gap-4">

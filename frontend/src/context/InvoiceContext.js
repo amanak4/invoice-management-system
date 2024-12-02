@@ -36,7 +36,7 @@ export const InvoiceProvider = ({ children }) => {
     };
 
     return (
-        <InvoiceContext.Provider value={{ invoices, fetchInvoices, deleteInvoice, loading }}>
+        <InvoiceContext.Provider value={{ invoices, fetchInvoices, deleteInvoice, loading, setInvoices }}>
             {children}
         </InvoiceContext.Provider>
     );

@@ -174,7 +174,8 @@ exports.deleteInvoice = async (req, res) => {
 exports.checkInvoiceNumber = async (req, res) => {
     try {
         const { invoice_number } = req.body;
-        const lowerCaseInvoiceNumber = invoice_number.toLowerCase();
+        const lowerCaseInvoiceNumber = invoice_number;
+        // console.log(lowerCaseInvoiceNumber);
         const existingInvoice = await Invoice.findOne({ invoice_number: lowerCaseInvoiceNumber });
         if (existingInvoice) {
             return res.status(400).json({ error: "Invoice number already exists." });

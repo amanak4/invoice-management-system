@@ -78,14 +78,19 @@ const AddInvoice = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-
+  
     if (name === "invoice_number") {
+      setFormData({ ...formData, [name]: value.toUpperCase() });
+
       clearTimeout(debounceTimer); // Clear the previous timer
       const timer = setTimeout(() => {
-        handleInvoiceNumberValidation(value); // Validate after delay
+        handleInvoiceNumberValidation(value.toUpperCase()); // Validate after delay
       }, 500); // 500ms debounce delay
       setDebounceTimer(timer);
+    }
+    else{
+      setFormData({ ...formData, [name]: value });
+
     }
   };
 
@@ -164,7 +169,7 @@ const AddInvoice = () => {
                 fullWidth
                 label="Invoice Number"
                 name="invoice_number"
-                value={formData.invoice_number}
+                value={formData.invoice_number.toUpperCase()}
                 onChange={handleInputChange}
                 variant="outlined"
                 error={!isInvoiceNumberValid}
