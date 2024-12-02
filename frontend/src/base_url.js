@@ -1,0 +1,1 @@
+export const base_url="https://invoice-management-system-hd96.onrender.com/api/invoices";

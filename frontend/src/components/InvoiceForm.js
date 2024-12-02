@@ -5,7 +5,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-
+import { base_url } from "../base_url";
 const AddInvoice = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -24,7 +24,7 @@ const AddInvoice = () => {
   
      if (id){
       try {
-        const response = await axios.get(`http://localhost:3000/api/invoices/${id}`);
+        const response = await axios.get(`${base_url}/${id}`);
         const { invoice_number, customer_name, date, details } = response.data.data;
         const detailsArray = Array.isArray(details)
           ? details
@@ -59,7 +59,7 @@ const AddInvoice = () => {
 
   const handleInvoiceNumberValidation = async (invoiceNumber) => {
     try {
-      const response = await axios.post("http://localhost:3000/api/invoices/checkInvoiceNumber", {
+      const response = await axios.post(`${base_url}/checkInvoiceNumber`, {
         invoice_number: invoiceNumber,
       });
       setIsInvoiceNumberValid(true);

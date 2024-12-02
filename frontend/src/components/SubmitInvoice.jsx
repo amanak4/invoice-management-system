@@ -3,7 +3,7 @@ import { Button, Typography } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
-
+import { base_url } from "../base_url";
 const SubmitInvoice = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -13,14 +13,14 @@ const SubmitInvoice = () => {
     // Simulate API submission
     try {
         if (invoiceData.id) {
-          await axios.put(`http://localhost:3000/api/invoices/${invoiceData.id}`, invoiceData);
+          await axios.put(`${base_url}/${invoiceData.id}`, invoiceData);
           toast.success("Invoice updated successfully.",{style: {
             borderRadius: '10px',
             background: '#333',
             color: '#fff',
         }});
         } else {
-          await axios.post(`http://localhost:3000/api/invoices`, invoiceData);
+          await axios.post(`${base_url}`, invoiceData);
           toast.success("Invoice added successfully.",{style: {
             borderRadius: '10px',
             background: '#333',
