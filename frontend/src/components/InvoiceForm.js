@@ -1,84 +1,100 @@
-import React, { useState } from "react";
-import { TextField, Button, IconButton, Grid } from "@mui/material";
-import { AddCircle, RemoveCircle } from "@mui/icons-material";
-import toast from "react-hot-toast";
+import React, { useState, useEffect } from "react";
+import { TextField, Button, IconButton, Divider, Box, Grid } from "@mui/material";
+import { Add, Remove } from "@mui/icons-material";
 import axios from "axios";
-import { useNavigate, useParams } from "react-router-dom";
+import toast from "react-hot-toast";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { motion } from "framer-motion";
 
-const InvoiceForm = () => {
-    const {id} = useParams();
-    console.log("sis",id);
+const AddInvoice = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     invoice_number: "",
     customer_name: "",
     date: "",
-    details: [
-      {
-        description: "",
-        quantity: 1,
-        unit_price: 0.0,
-      },
-    ],
+    details: [{ description: "", quantity: 1, unit_price: 0.0 }],
   });
-
-  // Handle input changes for main invoice fields
+  const [isInvoiceNumberValid, setIsInvoiceNumberValid] = useState(true);
+  const [debounceTimer, setDebounceTimer] = useState(null);
 
   const fetchInvoice = async () => {
-    if (id) {
+    console.log("hnama",location.state);
+  
+     if (id){
       try {
         const response = await axios.get(`http://localhost:3000/api/invoices/${id}`);
-        console.log("Fetched Invoice Data:", response.data);
-  
-        // Extract the actual invoice data from the response
         const { invoice_number, customer_name, date, details } = response.data.data;
-  
-        // if ( !Array.isArray(details)) {
-        //     throw new Error("Details data is invalid or not an array");
-        //   }
-        console.log("Details:", details);
-
-          const detailsArray = Array.isArray(details)
+        const detailsArray = Array.isArray(details)
           ? details
           : Object.keys(details).map((key) => ({
-              description: details[key].description || "",
-              quantity: details[key].quantity || 0,
-              unit_price: details[key].unit_price || 0.0,
+              description: details[key]?.description || "",
+              quantity: details[key]?.quantity || 0,
+              unit_price: details[key]?.unit_price || 0.0,
             }));
-        // Set the data correctly in formData
         setFormData({
           invoice_number,
           customer_name,
-          date:new Date(date).toISOString().split("T")[0], // Format date for input
+          date: new Date(date).toISOString().split("T")[0],
           details: detailsArray,
         });
-  
-        console.log("Updated Form Data:", formData);
       } catch (error) {
-        toast.error("Failed to fetch invoice data.");
-        console.error("Fetch Invoice Error:", error);
+        toast.error("Failed to fetch invoice data.",{style: {
+          borderRadius: '10px',
+          background: '#333',
+          color: '#fff',
+      }});
+      }
+    }
+    else if(location.state){
+      setFormData(location.state);
+      return;
+    }
+  };
+
+  useEffect(() => {
+    fetchInvoice();
+  }, [id, location.state,formData]);
+
+  const handleInvoiceNumberValidation = async (invoiceNumber) => {
+    try {
+      const response = await axios.post("http://localhost:3000/api/invoices/checkInvoiceNumber", {
+        invoice_number: invoiceNumber,
+      });
+      setIsInvoiceNumberValid(true);
+    } catch (error) {
+      if (error.response && error.response.status === 400) {
+        setIsInvoiceNumberValid(false);
+      } else {
+        toast.error("Error checking invoice number.",{style: {
+          borderRadius: '10px',
+          background: '#333',
+          color: '#fff',
+      }});
       }
     }
   };
-  
-
-  React.useEffect(() => {
-    fetchInvoice();
-  }, [id]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+
+    if (name === "invoice_number") {
+      clearTimeout(debounceTimer); // Clear the previous timer
+      const timer = setTimeout(() => {
+        handleInvoiceNumberValidation(value); // Validate after delay
+      }, 500); // 500ms debounce delay
+      setDebounceTimer(timer);
+    }
   };
 
-  // Handle input changes for line items
   const handleDetailChange = (index, field, value) => {
     const newDetails = [...formData.details];
     newDetails[index][field] = field === "quantity" || field === "unit_price" ? parseFloat(value) : value;
     setFormData({ ...formData, details: newDetails });
   };
 
-  // Add a new line item
   const addLineItem = () => {
     setFormData({
       ...formData,
@@ -86,139 +102,144 @@ const InvoiceForm = () => {
     });
   };
 
-  // Remove a line item
   const removeLineItem = (index) => {
     const newDetails = formData.details.filter((_, i) => i !== index);
     setFormData({ ...formData, details: newDetails });
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate form data
     if (!formData.invoice_number || !formData.customer_name || !formData.date) {
-      toast.error("Please fill in all required fields.");
+      toast.error("Please fill in all required fields.",{style: {
+        borderRadius: '10px',
+        background: '#333',
+        color: '#fff',
+    }});
       return;
     }
 
-    if (formData.details.length === 0 || formData.details.some((item) => !item.description || item.quantity <= 0 || item.unit_price <= 0)) {
-      toast.error("Please ensure all line items have valid data.");
+    if (!isInvoiceNumberValid) {
+      toast.error("Invoice number already exists.",{style: {
+        borderRadius: '10px',
+        background: '#333',
+        color: '#fff',
+    }});
       return;
     }
 
-    // Submit the form (make API call)
-    try {
-        if (id) {
-            // Update existing invoice
-            await axios.put(`http://localhost:3000/api/invoices/${id}`, formData);
-            toast.success("Invoice updated successfully.");
-        } else {
-            // Add new invoice
-            await axios.post(`http://localhost:3000/api/invoices`, formData);
-            toast.success("Invoice added successfully.");
-        }
-        navigate('/');
-    } catch (error) {
-        toast.error("Failed to save invoice.");
+    if (formData.details.some((item) => !item.description || item.quantity <= 0 || item.unit_price <= 0)) {
+      toast.error("Invalid line items.",{style: {
+        borderRadius: '10px',
+        background: '#333',
+        color: '#fff',
+    }});
+      return;
     }
 
-   
-
-    console.log("Submitted Data:", formData);
-    // Reset the form
-    setFormData({
-      invoice_number: "",
-      customer_name: "",
-      date: "",
-      details: [{ description: "", quantity: 1, unit_price: 0.0 }],
-    });
+    navigate("/review", { state: { ...formData, id } });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-4">
-      {/* Main Invoice Fields */}
-      <TextField
-        label="Invoice Number"
-        name="invoice_number"
-        value={formData.invoice_number}
-        onChange={handleInputChange}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Customer Name"
-        name="customer_name"
-        value={formData.customer_name}
-        onChange={handleInputChange}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Date"
-        type="date"
-        name="date"
-        value={formData.date}
-        onChange={handleInputChange}
-        fullWidth
-        margin="normal"
-        InputLabelProps={{ shrink: true }}
-      />
+    <div className="flex h-screen bg-gray-100">
+      <aside className="w-1/4 bg-white p-6 shadow-md">
+        <h2 className="text-xl font-semibold mb-4">Steps</h2>
+        <ul className="space-y-2">
+          <li className="text-blue-600 font-bold">{id ? "Edit Invoice" : "Add Invoice"}</li>
+          <li>2. Review</li>
+          <li>3. Submit</li>
+        </ul>
+      </aside>
 
-      {/* Line Items Section */}
-      <h3 className="text-lg font-semibold mt-4 mb-2">Line Items</h3>
-      {formData.details.map((detail, index) => (
-        <Grid container spacing={2} alignItems="center" key={index}>
-          <Grid item xs={6} sm={4}>
+      <main className="flex-1 bg-white shadow-md p-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1 className="text-2xl font-bold mb-6">{id ? "Edit Invoice" : "Add Invoice"}</h1>
+          <Box component="form" onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <TextField
+                fullWidth
+                label="Invoice Number"
+                name="invoice_number"
+                value={formData.invoice_number}
+                onChange={handleInputChange}
+                variant="outlined"
+                error={!isInvoiceNumberValid}
+                helperText={!isInvoiceNumberValid ? "Invoice number already exists." : "Unique invoice number."}
+              />
+              <TextField
+                fullWidth
+                label="Customer Name"
+                name="customer_name"
+                value={formData.customer_name}
+                onChange={handleInputChange}
+                variant="outlined"
+              />
+            </div>
             <TextField
-              label="Description"
-              value={detail.description}
-              onChange={(e) => handleDetailChange(index, "description", e.target.value)}
               fullWidth
-              margin="normal"
+              label="Date"
+              type="date"
+              name="date"
+              value={formData.date}
+              onChange={handleInputChange}
+              InputLabelProps={{ shrink: true }}
+              variant="outlined"
             />
-          </Grid>
-          <Grid item xs={3} sm={2}>
-            <TextField
-              label="Quantity"
-              type="number"
-              value={detail.quantity}
-              onChange={(e) => handleDetailChange(index, "quantity", e.target.value)}
-              fullWidth
-              margin="normal"
-            />
-          </Grid>
-          <Grid item xs={3} sm={2}>
-            <TextField
-              label="Unit Price"
-              type="number"
-              value={detail.unit_price}
-              onChange={(e) => handleDetailChange(index, "unit_price", e.target.value)}
-              fullWidth
-              margin="normal"
-            />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <IconButton
-              color="error"
-              onClick={() => removeLineItem(index)}
-              disabled={formData.details.length === 1}
-            >
-              <RemoveCircle />
-            </IconButton>
-            <IconButton color="primary" onClick={addLineItem}>
-              <AddCircle />
-            </IconButton>
-          </Grid>
-        </Grid>
-      ))}
 
-      {/* Submit Button */}
-      <Button type="submit" variant="contained" color="primary" fullWidth className="mt-4">
-       {id ? "Update Invoice" : "Add Invoice"}
-      </Button>
-    </form>
+            <Divider className="my-6" />
+
+            <h2 className="text-xl font-semibold mb-4">Line Items</h2>
+            {formData.details.map((detail, index) => (
+              <Grid container spacing={2} key={index} alignItems="center">
+                <Grid item xs={6}>
+                  <TextField
+                    fullWidth
+                    label="Description"
+                    value={detail.description}
+                    onChange={(e) => handleDetailChange(index, "description", e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={3}>
+                  <TextField
+                    fullWidth
+                    label="Quantity"
+                    type="number"
+                    value={detail.quantity}
+                    onChange={(e) => handleDetailChange(index, "quantity", e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={3}>
+                  <TextField
+                    fullWidth
+                    label="Unit Price"
+                    type="number"
+                    value={detail.unit_price}
+                    onChange={(e) => handleDetailChange(index, "unit_price", e.target.value)}
+                  />
+                </Grid>
+                <Grid item>
+                  <IconButton color="error" onClick={() => removeLineItem(index)} disabled={formData.details.length === 1}>
+                    <Remove />
+                  </IconButton>
+                  <IconButton color="primary" onClick={addLineItem}>
+                    <Add />
+                  </IconButton>
+                </Grid>
+              </Grid>
+            ))}
+
+            <Button type="submit" variant="contained" color="primary" fullWidth className="mt-4">
+              {id ? "Update Invoice" : "Add Invoice"}
+            </Button>
+          </Box>
+        </motion.div>
+      </main>
+    </div>
   );
 };
 
-export default InvoiceForm;
+export default AddInvoice;

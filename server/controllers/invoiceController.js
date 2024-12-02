@@ -6,6 +6,13 @@ exports.createInvoice = async (req, res) => {
     try {
         const { invoice_number, customer_name, date, details } = req.body;
 
+           //invoice_no. should be unique
+           const lowerCaseInvoiceNumber = invoice_number.toLowerCase();
+        const existingInvoice = await Invoice.findOne({ invoice_number: lowerCaseInvoiceNumber });
+        if (existingInvoice) {
+            return res.status(400).json({ error: "Invoice number already exists." });
+        }
+
         if (!details || !details.length) {
             return res.status(400).json({ error: "Invoice must have at least one detail." });
         }
@@ -106,6 +113,12 @@ exports.updateInvoice = async (req, res) => {
         const { id } = req.params;
         const { invoice_number, customer_name, date, details } = req.body;
 
+        const lowerCaseInvoiceNumber = invoice_number.toLowerCase();
+        const existingInvoice = await Invoice.findOne({ invoice_number: lowerCaseInvoiceNumber });
+        if (existingInvoice) {
+            return res.status(400).json({ error: "Invoice number already exists." });
+        }
+
         if (!details || !details.length) {
             return res.status(400).json({ error: "Invoice must have at least one detail." });
         }
@@ -153,6 +166,20 @@ exports.deleteInvoice = async (req, res) => {
         await Invoice.findByIdAndDelete(id);
 
         res.status(200).json({ message: "Invoice deleted successfully." });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.checkInvoiceNumber = async (req, res) => {
+    try {
+        const { invoice_number } = req.body;
+        const lowerCaseInvoiceNumber = invoice_number.toLowerCase();
+        const existingInvoice = await Invoice.findOne({ invoice_number: lowerCaseInvoiceNumber });
+        if (existingInvoice) {
+            return res.status(400).json({ error: "Invoice number already exists." });
+        }
+        res.status(200).json({ message: "Invoice number is unique." });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

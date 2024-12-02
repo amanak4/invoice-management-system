@@ -4,13 +4,15 @@ const {
     getInvoices,
     deleteInvoice,
     getIDInvoice,
-    updateInvoice
+    updateInvoice,
+    checkInvoiceNumber
 } = require('../controllers/invoiceController');
 
 const router = express.Router();
 
 router.get('/', getInvoices);
 router.get('/:id', getIDInvoice);
+router.post('/checkInvoiceNumber',checkInvoiceNumber);
 router.post('/', createInvoice);
 router.put('/:id',updateInvoice);
 router.delete('/:id', deleteInvoice);
