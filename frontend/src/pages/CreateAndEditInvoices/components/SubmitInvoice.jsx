@@ -3,7 +3,7 @@ import { Button, Typography } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
-import { base_url } from "../base_url";
+import { base_url } from "../../../base_url";
 const SubmitInvoice = () => {
   const navigate = useNavigate();
   const location = useLocation();

@@ -5,7 +5,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { base_url } from "../base_url";
+import { base_url } from "../../../base_url";
 const AddInvoice = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ const AddInvoice = () => {
   const [debounceTimer, setDebounceTimer] = useState(null);
 
   const fetchInvoice = async () => {
-    console.log("hnama",location.state);
+    // console.log("hnama",location.state);
   
      if (id){
       try {
@@ -82,10 +82,10 @@ const AddInvoice = () => {
     if (name === "invoice_number") {
       setFormData({ ...formData, [name]: value.toUpperCase() });
 
-      clearTimeout(debounceTimer); // Clear the previous timer
+      clearTimeout(debounceTimer); 
       const timer = setTimeout(() => {
-        handleInvoiceNumberValidation(value.toUpperCase()); // Validate after delay
-      }, 500); // 500ms debounce delay
+        handleInvoiceNumberValidation(value.toUpperCase()); 
+      }, 500); 
       setDebounceTimer(timer);
     }
     else{
